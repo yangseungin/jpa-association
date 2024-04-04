@@ -8,25 +8,6 @@ import java.lang.reflect.Field;
 
 public abstract class AbstractEntityField {
 
-    public static AbstractEntityField createEntityField(final Field field) {
-        final String fieldName = field.getName();
-
-        if (field.isAnnotationPresent(Transient.class)) {
-            throw new MetaDataModelMappingException(fieldName + " is Transient field.");
-        }
-
-        final String columnName = ColumnBinder.toColumnName(field);
-        final Class<? extends Field> fieldClass = field.getClass();
-
-        if (field.isAnnotationPresent(Id.class)) {
-            return new EntityId(fieldName, columnName, fieldClass, field);
-        } else if (isJoinField(field)) {
-            return new EntityJoinField(fieldName, columnName, fieldClass, field);
-        }
-
-        return new EntityField(fieldName, columnName, fieldClass, field);
-    }
-
     private final String fieldName;
     private final String columnName;
     private final Class<?> entityClass;
@@ -39,6 +20,25 @@ public abstract class AbstractEntityField {
         this.field = field;
     }
 
+    public static AbstractEntityField createEntityField(final Field field) {
+        final String fieldName = field.getName();
+
+        if (field.isAnnotationPresent(Transient.class)) {
+            throw new MetaDataModelMappingException(fieldName + " is Transient field.");
+        }
+
+        final String columnName = ColumnBinder.toColumnName(field);
+        final Class<?> fieldClass = ReflectionUtils.mapToGenericClass(field);
+
+        if (field.isAnnotationPresent(Id.class)) {
+            return new EntityId(fieldName, columnName, fieldClass, field);
+        } else if (isJoinField(field)) {
+            return new EntityJoinField(fieldName, columnName, fieldClass, field);
+        }
+
+        return new EntityField(fieldName, columnName, fieldClass, field);
+    }
+
     private static boolean isJoinField(final Field field) {
         final boolean oneToOneField = field.isAnnotationPresent(OneToOne.class);
         final boolean oneToManyField = field.isAnnotationPresent(OneToMany.class);
@@ -49,6 +49,10 @@ public abstract class AbstractEntityField {
 
     public boolean isJoinField() {
         return isJoinField(this.field);
+    }
+
+    public Class<?> getEntityClass() {
+        return this.entityClass;
     }
 
     public Field getField() {

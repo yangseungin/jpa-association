@@ -3,8 +3,8 @@ package persistence.sql;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "order_items")
-public class OrderItem {
+@Table(name = "eager_order_items")
+public class EagerOrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,13 +14,13 @@ public class OrderItem {
 
     private Integer quantity;
 
-    public OrderItem(final Long id, final String product, final Integer quantity) {
+    public EagerOrderItem(final Long id, final String product, final Integer quantity) {
         this.id = id;
         this.product = product;
         this.quantity = quantity;
     }
 
-    public OrderItem() {
+    public EagerOrderItem() {
 
     }
 

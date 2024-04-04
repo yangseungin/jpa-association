@@ -3,10 +3,7 @@ package persistence;
 import jdbc.JdbcTemplate;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import persistence.sql.JdbcServerTest;
-import persistence.sql.Order;
-import persistence.sql.OrderItem;
-import persistence.sql.TestJdbcServerExtension;
+import persistence.sql.*;
 import persistence.sql.ddl.PersonV3;
 
 import java.util.List;
@@ -33,7 +30,14 @@ public abstract class JdbcServerDmlQueryTestSupport extends EntityMetaDataTestSu
                 "    orderNumber VARCHAR(255)\n" +
                 ");\n" +
                 "\n" +
-                "CREATE TABLE order_items (\n" +
+                "CREATE TABLE eager_order_items (\n" +
+                "    id BIGINT AUTO_INCREMENT PRIMARY KEY,\n" +
+                "    product VARCHAR(255),\n" +
+                "    quantity INTEGER,\n" +
+                "    order_id BIGINT,\n" +
+                "    FOREIGN KEY (order_id) REFERENCES orders(id)\n" +
+                ");\n" +
+                "CREATE TABLE lazy_order_items (\n" +
                 "    id BIGINT AUTO_INCREMENT PRIMARY KEY,\n" +
                 "    product VARCHAR(255),\n" +
                 "    quantity INTEGER,\n" +
@@ -71,15 +75,29 @@ public abstract class JdbcServerDmlQueryTestSupport extends EntityMetaDataTestSu
                 "    ('" + order.getOrderNumber() + "', default);";
     }
 
-    protected String generateOrderItemTableStubInsertQuery(final Order order) {
-        return this.generateOrderItemTableStubInsertQuery(order.getId(), order.getOrderItems());
+    protected String generateEagerOrderItemTableStubInsertQuery(final Order order) {
+        return this.generateEagerOrderItemTableStubInsertQuery(order.getId(), order.getEagerOrderItems());
     }
 
-    protected String generateOrderItemTableStubInsertQuery(final Long orderId, final List<OrderItem> orderItems) {
-        final String clause = orderItems.stream().map(orderItem -> "('" + orderItem.getProduct() + "', " + orderItem.getQuantity() + ", " + orderId + ", default)").collect(Collectors.joining(", "));
+    protected String generateEagerOrderItemTableStubInsertQuery(final Long orderId, final List<EagerOrderItem> eagerOrderItems) {
+        final String clause = eagerOrderItems.stream().map(eagerOrderItem -> "('" + eagerOrderItem.getProduct() + "', " + eagerOrderItem.getQuantity() + ", " + orderId + ", default)").collect(Collectors.joining(", "));
         return "insert\n" +
                 "into\n" +
-                "    order_items\n" +
+                "    eager_order_items\n" +
+                "    (product, quantity, order_id, id) " +
+                "values\n" +
+                "    " + clause + ";";
+    }
+
+    protected String generateLazyOrderItemTableStubInsertQuery(final Order order) {
+        return this.generateLazyOrderItemTableStubInsertQuery(order.getId(), order.getLazyOrderItems());
+    }
+
+    protected String generateLazyOrderItemTableStubInsertQuery(final Long orderId, final List<LazyOrderItem> lazyOrderItems) {
+        final String clause = lazyOrderItems.stream().map(lazyOrderItem -> "('" + lazyOrderItem.getProduct() + "', " + lazyOrderItem.getQuantity() + ", " + orderId + ", default)").collect(Collectors.joining(", "));
+        return "insert\n" +
+                "into\n" +
+                "    lazy_order_items\n" +
                 "    (product, quantity, order_id, id) " +
                 "values\n" +
                 "    " + clause + ";";

@@ -16,12 +16,17 @@ public class Order {
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
-    private List<OrderItem> orderItems;
+    private List<EagerOrderItem> eagerOrderItems;
 
-    public Order(final Long id, final String orderNumber, final List<OrderItem> orderItems) {
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private List<LazyOrderItem> lazyOrderItems;
+
+    public Order(final Long id, final String orderNumber, final List<EagerOrderItem> eagerOrderItems, final List<LazyOrderItem> lazyOrderItems) {
         this.id = id;
         this.orderNumber = orderNumber;
-        this.orderItems = orderItems;
+        this.eagerOrderItems = eagerOrderItems;
+        this.lazyOrderItems = lazyOrderItems;
     }
 
     public Order() {
@@ -36,7 +41,11 @@ public class Order {
         return this.orderNumber;
     }
 
-    public List<OrderItem> getOrderItems() {
-        return this.orderItems;
+    public List<EagerOrderItem> getEagerOrderItems() {
+        return this.eagerOrderItems;
+    }
+
+    public List<LazyOrderItem> getLazyOrderItems() {
+        return this.lazyOrderItems;
     }
 }
