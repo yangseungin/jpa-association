@@ -11,13 +11,17 @@ import persistence.sql.dml.querybuilder.UpdateQueryBuilder;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class EntityPersister {
     private final JdbcTemplate jdbcTemplate;
+    private final Map<Class, Long> generatedKeyHolder;
 
     public EntityPersister(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        this.generatedKeyHolder = new HashMap<>();
     }
 
     public <T> T update(T entity, Long id) {
@@ -36,11 +40,31 @@ public class EntityPersister {
         Class<?> clazz = entity.getClass();
         String queryToInsert = new InsertQueryBuilder(clazz).getInsertQuery(entity);
         Long id = jdbcTemplate.executeUpdate(queryToInsert);
-        initId(entity, id);
+        generatedKeyHolder.put(clazz, id);
+        setIdentifier(entity, id);
         return entity;
     }
 
-    private void initId(Object entity, Long id) {
+    public long getIdToBeGenerated(Class<?> clazz) {
+        Long currentId = generatedKeyHolder.get(clazz);
+        if (currentId == null) {
+            return 1L;
+        }
+        return currentId + 1;
+    }
+
+    public void setIdentifier(Object entity) {
+        Field idField = Arrays.stream(entity.getClass().getDeclaredFields()).filter(x -> x.isAnnotationPresent(Id.class)).findAny().get();
+        idField.setAccessible(true);
+        try {
+            long id = getIdToBeGenerated(entity.getClass());
+            idField.set(entity, id);
+        } catch (IllegalAccessException e) {
+            throw new UnableToChangeIdException();
+        }
+    }
+
+    public void setIdentifier(Object entity, Long id) {
         Field idField = Arrays.stream(entity.getClass().getDeclaredFields()).filter(x -> x.isAnnotationPresent(Id.class)).findAny().get();
         idField.setAccessible(true);
         try {
@@ -49,8 +73,9 @@ public class EntityPersister {
             throw new UnableToChangeIdException();
         }
     }
+
     public void delete(Object entity) {
-        Long id = new PrimaryKey(entity).value();
+        Long id = new PrimaryKey(entity).getPrimaryKeyValue(entity);
         String query = new DeleteQueryBuilder(entity.getClass()).deleteById(id);
         jdbcTemplate.execute(query);
     }

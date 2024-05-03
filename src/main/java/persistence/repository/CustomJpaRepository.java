@@ -15,12 +15,14 @@ public class CustomJpaRepository {
 
 
     <T> T save (T entity) {
-        boolean isInEntityManger = entityManager.find(entity.getClass(), new PrimaryKey(entity).value()).isPresent();
+        boolean isInEntityManger = entityManager.find(entity.getClass(), new PrimaryKey(entity).getPrimaryKeyValue(entity)).isPresent();
 
         if (isInEntityManger) {
            return entityManager.merge(entity);
         }
-        return entityManager.persist(entity);
+        entityManager.persist(entity);
+        Long id= new PrimaryKey(entity).getPrimaryKeyValue(entity);
+        return (T) entityManager.find(entity.getClass(), id).get();
     }
 
     <T> Optional<T> find(Class<T> clazz, Long id) {

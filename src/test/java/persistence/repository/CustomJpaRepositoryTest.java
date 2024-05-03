@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import persistence.entity.testfixture.notcolumn.Person;
 import persistence.sql.ddl.querybuilder.CreateQueryBuilder;
-
 import static persistence.sql.ddl.common.TestSqlConstant.DROP_TABLE_USERS;
 
 class CustomJpaRepositoryTest {

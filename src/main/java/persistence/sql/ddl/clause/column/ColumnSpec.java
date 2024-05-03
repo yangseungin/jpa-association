@@ -1,5 +1,7 @@
 package persistence.sql.ddl.clause.column;
 
+import persistence.sql.common.DtoMapper;
+
 import java.lang.reflect.Field;
 
 public class ColumnSpec {
@@ -13,7 +15,7 @@ public class ColumnSpec {
     }
 
     public String name() {
-        return name;
+        return DtoMapper.camelToSnake(name);
     }
 
     public Class<?> type() {

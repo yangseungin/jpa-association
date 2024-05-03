@@ -20,7 +20,8 @@ public class JdbcTemplate {
             if (resultSize == 0) {
                 throw new IllegalStateException();
             }
-            return getId(statement);
+            Long id = getId(statement);
+            return id;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

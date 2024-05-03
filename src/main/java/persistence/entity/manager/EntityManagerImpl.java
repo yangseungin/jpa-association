@@ -9,7 +9,10 @@ import persistence.entity.persistencecontext.EntityEntry;
 import persistence.entity.persistencecontext.PersistenceContext;
 import persistence.entity.persistencecontext.PersistenceContextImpl;
 import persistence.entity.persister.EntityPersister;
+import persistence.sql.ddl.clause.column.JoinClause;
 
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
 
 public class EntityManagerImpl implements EntityManager {
@@ -23,6 +26,7 @@ public class EntityManagerImpl implements EntityManager {
         this.entityLoader = new EntityLoader(jdbcTemplate);
         this.entityPersister = new EntityPersister(jdbcTemplate);
     }
+
     public EntityManagerImpl(PersistenceContext persistenceContext, JdbcTemplate jdbcTemplate) {
         this.persistenceContext = persistenceContext;
         this.entityLoader = new EntityLoader(jdbcTemplate);
@@ -40,6 +44,9 @@ public class EntityManagerImpl implements EntityManager {
         if (searchedEntity.isEmpty()) {
             return Optional.empty();
         }
+        if (JoinClause.hasOneToMany(searchedEntity.get().getClass())) {
+            mapChildEntities(searchedEntity.get());
+        }
         EntityEntry entityEntry = persistenceContext.getEntityEntry(clazz, id).get();
         entityEntry.load();
         T addedEntity = persistenceContext.addEntity(searchedEntity.get(), id);
@@ -47,18 +54,40 @@ public class EntityManagerImpl implements EntityManager {
         return Optional.of(addedEntity);
     }
 
+    private <T> void mapChildEntities(T searchedEntity) {
+        Class<?> childEntityClass = JoinClause.childEntityClass(searchedEntity.getClass());
+        List<?> childEntities = entityLoader.findAll(childEntityClass);
+
+        Field childEntityField = JoinClause.findChildEntityField(searchedEntity.getClass());
+        childEntityField.setAccessible(true);
+        try {
+            childEntityField.set(searchedEntity, childEntities);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("OneToMany 매핑에 실패하였습니다.");
+        }
+    }
+
     @Override
-    public <T> T persist(T entity) {
+    public void persist(Object entity) {
         validate(entity);
-        T insertedEntity = entityPersister.insert(entity);
+
+        if (JoinClause.hasOneToMany(entity.getClass())) {
+            List<Object> childEntities = JoinClause.childEntityClasses(entity);
+            childEntities.forEach(this::persist);
+        }
+
+        entityPersister.setIdentifier(entity);
         EntityEntry entityEntry = persistenceContext.getEntityEntry(entity);
         entityEntry.save();
+
+        Object insertedEntity = entityPersister.insert(entity);
+
         entityEntry.finishStatusUpdate();
-        return persistenceContext.updateEntity(insertedEntity, new PrimaryKey(insertedEntity).value());
+        persistenceContext.updateEntity(insertedEntity, new PrimaryKey(insertedEntity).getPrimaryKeyValue(entity));
     }
 
     private void validate(Object entity) {
-        Long primaryKey = new PrimaryKey(entity).value();
+        Long primaryKey = new PrimaryKey(entity).getPrimaryKeyValue(entity);
 
         Optional<?> searchedEntityEntry = persistenceContext.getEntityEntry(entity.getClass(), primaryKey);
         if (searchedEntityEntry.isPresent()) {
@@ -68,13 +97,12 @@ public class EntityManagerImpl implements EntityManager {
 
     @Override
     public <T> T merge(T entity) {
-
         EntityEntry entityEntry = persistenceContext.getEntityEntry(entity);
         if (entityEntry.isReadOnly()) {
             throw new ReadOnlyException();
         }
 
-        Long primaryKey = new PrimaryKey(entity).value();
+        Long primaryKey = new PrimaryKey(entity).getPrimaryKeyValue(entity);
 
         if (persistenceContext.isDirty(entity)) {
             entityEntry.save();

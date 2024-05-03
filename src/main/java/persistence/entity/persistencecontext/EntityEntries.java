@@ -35,4 +35,11 @@ public class EntityEntries {
         }
         entityEntries.put(key, new EntityEntry());
     }
+
+    public <T> void put(EntityKey key) {
+        if (key.getId() == null) {
+            return;
+        }
+        entityEntries.put(key, new EntityEntry());
+    }
 }

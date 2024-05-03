@@ -72,7 +72,7 @@ class EntityPersisterTest {
     void updateTest() {
         // given
         Person testFixture = new Person("김철수", 21, "chulsoo.kim@gmail.com", 11);
-        entityPersister.insert(testFixture);
+        Person inserted = entityPersister.insert(testFixture);
 
         // when
         Object actual = entityPersister.update(testFixture, 1L);
