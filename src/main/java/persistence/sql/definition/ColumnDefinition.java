@@ -1,5 +1,6 @@
 package persistence.sql.definition;
 
+import common.ReflectionFieldAccessUtils;
 import jakarta.persistence.Column;
 import org.jetbrains.annotations.NotNull;
 import persistence.sql.SqlType;
@@ -110,19 +111,8 @@ public class ColumnDefinition {
 
     @NotNull
     private Optional<Object> findValueFromObject(Object entity, Field field) {
-        boolean wasAccessible = field.canAccess(entity);
-        try {
-            if (!wasAccessible) {
-                field.setAccessible(true);
-            }
-
-            return Optional.ofNullable(field.get(entity));
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException("Cannot access field value", e);
-        } finally {
-            if (!wasAccessible) {
-                field.setAccessible(false);
-            }
-        }
+        return Optional.ofNullable(
+                ReflectionFieldAccessUtils.accessAndGet(entity, field)
+        );
     }
 }

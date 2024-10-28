@@ -45,4 +45,11 @@ public class PersistenceContextImpl implements PersistenceContext {
         entityEntries.put(entityKey, entityEntry);
     }
 
+    @Override
+    public void clear() {
+        managedEntities.clear();
+        entitySnapshots.clear();
+        entityEntries.clear();
+    }
+
 }

@@ -2,6 +2,7 @@ package persistence.sql.definition;
 
 import persistence.sql.Dialect;
 import persistence.sql.Queryable;
+import persistence.sql.SqlType;
 
 import java.lang.reflect.Field;
 
@@ -30,7 +31,7 @@ public class TableColumn implements Queryable {
     }
 
     @Override
-    public String getValueAsString(Object entity) {
+    public String getValueWithQuoted(Object entity) {
         final Object value = columnDefinition.getValue(entity);
 
         if (value instanceof String) {
@@ -53,6 +54,14 @@ public class TableColumn implements Queryable {
     @Override
     public String getDeclaredName() {
         return columnDefinition.getDeclaredName();
+    }
+
+    public SqlType getSqlType() {
+        return columnDefinition.getSqlType();
+    }
+
+    public ColumnDefinition getColumnDefinition() {
+        return columnDefinition;
     }
 
 }

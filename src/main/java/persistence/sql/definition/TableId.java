@@ -82,11 +82,11 @@ public class TableId implements Queryable {
 
     @Override
     public boolean hasValue(Object entity) {
-        return columnDefinition.hasValue(entity) && !Objects.equals(getValueAsString(entity), "0");
+        return columnDefinition.hasValue(entity) && !Objects.equals(getValueWithQuoted(entity), "0");
     }
 
     @Override
-    public String getValueAsString(Object entity) {
+    public String getValueWithQuoted(Object entity) {
         final Object value = columnDefinition.getValue(entity);
 
         if (value instanceof String) {
@@ -99,5 +99,9 @@ public class TableId implements Queryable {
     @Override
     public Object getValue(Object entity) {
         return columnDefinition.getValue(entity);
+    }
+
+    public ColumnDefinition getColumnDefinition() {
+        return columnDefinition;
     }
 }

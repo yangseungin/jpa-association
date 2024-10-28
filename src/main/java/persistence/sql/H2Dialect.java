@@ -17,6 +17,7 @@ public class H2Dialect implements Dialect {
             case VARCHAR -> typeMap.get(SqlType.VARCHAR) + "(" + columnDefinition.getLength() + ")";
             case BIGINT -> typeMap.get(SqlType.BIGINT);
             case INTEGER -> typeMap.get(SqlType.INTEGER);
+            case ARRAY -> throw new UnsupportedOperationException("ARRAY type is not supported by H2");
         };
     }
 }

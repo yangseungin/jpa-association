@@ -21,7 +21,7 @@ public class EntitySnapshot {
     }
 
     private static Object getNullableValue(Object entity, Queryable column) {
-        return column.hasValue(entity) ? column.getValueAsString(entity) : null;
+        return column.hasValue(entity) ? column.getValueWithQuoted(entity) : null;
     }
 
     public boolean hasDirtyColumns(Object managedEntity) {

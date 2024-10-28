@@ -1,6 +1,7 @@
 package persistence.sql.dml.query;
 
 import persistence.sql.Queryable;
+import persistence.sql.definition.TableAssociationDefinition;
 import persistence.sql.definition.TableDefinition;
 
 import java.io.Serializable;
@@ -32,7 +33,7 @@ public class UpdateQueryBuilder {
                         .collect(
                                 Collectors.toMap(
                                         Queryable::getColumnName,
-                                        column -> column.hasValue(entity) ? column.getValueAsString(entity) : "null",
+                                        column -> column.hasValue(entity) ? column.getValueWithQuoted(entity) : "null",
                                         (value1, value2) -> value2,
                                         LinkedHashMap::new
                                 )
@@ -45,6 +46,30 @@ public class UpdateQueryBuilder {
         query.append(idValue);
         query.append(";");
 
+        return query.toString();
+    }
+
+    public String build(Object parent, Object child, Serializable parentId, Serializable childId) {
+        final TableDefinition parentTableDefinition = new TableDefinition(parent.getClass());
+        final TableDefinition childTableDefinition = new TableDefinition(child.getClass());
+        final TableAssociationDefinition childAssociationDefinition = parentTableDefinition.getAssociations().stream()
+                .filter(association -> association.getAssociatedEntityClass().equals(child.getClass()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Association not found"));
+
+        final StringBuilder query = new StringBuilder("UPDATE ").append(childAssociationDefinition.getTableName());
+        columnClause(
+                query,
+                Map.of(
+                        childAssociationDefinition.getJoinColumnName(),
+                        parentId
+                )
+        );
+
+        query.append(" WHERE ");
+        query.append(childTableDefinition.getTableId().getColumnName()).append(" = ");
+        query.append(childId);
+        query.append(";");
         return query.toString();
     }
 }

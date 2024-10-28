@@ -37,7 +37,7 @@ public class InsertQueryBuilder {
     private String valueClause(Object object, List<? extends Queryable> targetColumns) {
         return targetColumns
                 .stream()
-                .map(column -> column.getValueAsString(object))
+                .map(column -> column.getValueWithQuoted(object))
                 .reduce((value1, value2) -> value1 + ", " + value2)
                 .orElse(EMPTY_STRING);
     }

@@ -13,6 +13,7 @@ import persistence.sql.ddl.query.CreateTableQueryBuilder;
 import persistence.sql.ddl.query.DropQueryBuilder;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -59,7 +60,7 @@ class EntityPersisterTest {
         server.start();
 
         jdbcTemplate = new JdbcTemplate(server.getConnection());
-        String query2 = new CreateTableQueryBuilder(new H2Dialect(), QueryTestEntityWithIdentityId.class).build();
+        String query2 = new CreateTableQueryBuilder(new H2Dialect(), QueryTestEntityWithIdentityId.class, null).build();
         jdbcTemplate.execute(query2);
     }
 

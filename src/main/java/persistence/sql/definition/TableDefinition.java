@@ -9,14 +9,19 @@ import persistence.sql.Queryable;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
 public class TableDefinition {
 
     private final String tableName;
+    private final Class<?> entityClass;
     private final List<TableColumn> columns;
+    private final List<TableAssociationDefinition> associations;
     private final TableId tableId;
 
     public TableDefinition(Class<?> entityClass) {
@@ -25,8 +30,33 @@ public class TableDefinition {
         final Field[] fields = entityClass.getDeclaredFields();
 
         this.tableName = determineTableName(entityClass);
+        this.entityClass = entityClass;
+        this.associations = determineAssociations(entityClass);
         this.columns = createTableColumns(fields);
         this.tableId = new TableId(fields);
+    }
+
+    @NotNull
+    private static List<TableAssociationDefinition> determineAssociations(Class<?> entityClass) {
+        final List<Field> collectionFields = Arrays.stream(entityClass.getDeclaredFields())
+                .filter(field -> Collection.class.isAssignableFrom(field.getType()))
+                .toList();
+
+        if (collectionFields.isEmpty()) {
+            return List.of();
+        }
+
+        return collectionFields.stream()
+                .map(field -> new TableAssociationDefinition(getGenericActualType(field), field))
+                .toList();
+    }
+
+    @NotNull
+    private static Class<?> getGenericActualType(Field field) {
+        final Type genericType = field.getGenericType();
+        final Type[] actualTypeArguments = ((ParameterizedType) genericType).getActualTypeArguments();
+
+        return (Class<?>) actualTypeArguments[0];
     }
 
     @NotNull
@@ -54,6 +84,7 @@ public class TableDefinition {
         return Arrays.stream(fields)
                 .filter(field -> !field.isAnnotationPresent(Id.class))
                 .filter(field -> !field.isAnnotationPresent(Transient.class))
+                .filter(field -> !Collection.class.isAssignableFrom(field.getType()))
                 .map(TableColumn::new)
                 .toList();
     }
@@ -77,6 +108,10 @@ public class TableDefinition {
         }
     }
 
+    public Class<?> getEntityClass() {
+        return entityClass;
+    }
+
     public TableId getTableId() {
         return tableId;
     }
@@ -95,9 +130,10 @@ public class TableDefinition {
 
     public List<? extends Queryable> withIdColumns() {
         return Stream.concat(
-                Stream.of(tableId),
-                columns.stream()
-        ).toList();
+                        Stream.of(tableId),
+                        columns.stream()
+                )
+                .toList();
     }
 
     public List<? extends Queryable> withoutIdColumns() {
@@ -108,5 +144,25 @@ public class TableDefinition {
         return withIdColumns().stream()
                 .filter(column -> column.hasValue(entity))
                 .toList();
+    }
+
+    public List<TableAssociationDefinition> getAssociations() {
+        return associations;
+    }
+
+    public boolean hasAssociations() {
+        return !associations.isEmpty();
+    }
+
+    public boolean hasColumn(String name) {
+        return columns.stream()
+                .anyMatch(column -> column.getColumnName().equals(name));
+    }
+
+    public Queryable getColumn(String name) {
+        return withIdColumns().stream()
+                .filter(column -> column.getColumnName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Column not found"));
     }
 }

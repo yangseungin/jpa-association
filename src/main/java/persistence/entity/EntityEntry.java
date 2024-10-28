@@ -6,7 +6,7 @@ public class EntityEntry {
     private Status status;
     private Serializable id;
 
-    private EntityEntry(Status status, Serializable id) {
+    public EntityEntry(Status status, Serializable id) {
         this.status = status;
         this.id = id;
     }

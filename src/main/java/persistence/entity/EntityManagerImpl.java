@@ -1,6 +1,8 @@
 package persistence.entity;
 
+import common.ReflectionFieldAccessUtils;
 import jdbc.JdbcTemplate;
+import persistence.sql.definition.TableDefinition;
 
 import java.io.Serializable;
 import java.util.function.Supplier;
@@ -32,12 +34,8 @@ public class EntityManagerImpl implements EntityManager {
         }
 
         final T loaded = entityLoader.loadEntity(clazz, entityKey);
-
-        persistenceContext.addEntity(entityKey, loaded);
-        persistenceContext.addDatabaseSnapshot(entityKey, loaded);
-        entityEntry.updateStatus(Status.MANAGED);
-        persistenceContext.addEntry(entityKey, entityEntry);
-
+        addEntityInContext(entityKey, loaded);
+        addManagedEntityEntry(entityKey, entityEntry);
         return loaded;
     }
 
@@ -72,11 +70,10 @@ public class EntityManagerImpl implements EntityManager {
 
         entityPersister.insert(entity);
         final EntityKey entityKey = new EntityKey(entityPersister.getEntityId(entity), entity.getClass());
+        addEntityInContext(entityKey, entity);
+        addManagedEntityEntry(entityKey, entityEntry);
 
-        persistenceContext.addEntity(entityKey, entity);
-        persistenceContext.addDatabaseSnapshot(entityKey, entity);
-        entityEntry.updateStatus(Status.MANAGED);
-        persistenceContext.addEntry(entityKey, entityEntry);
+        manageChildEntity(entity);
     }
 
     @Override
@@ -96,15 +93,19 @@ public class EntityManagerImpl implements EntityManager {
         final EntityEntry entityEntry = persistenceContext.getEntityEntry(entityKey);
         checkManagedEntity(entity, entityEntry);
 
-
         final EntitySnapshot entitySnapshot = persistenceContext.getDatabaseSnapshot(entityKey);
         if (entitySnapshot.hasDirtyColumns(entity)) {
             entityPersister.update(entity);
         }
 
-        persistenceContext.addEntity(entityKey, entity);
-        persistenceContext.addDatabaseSnapshot(entityKey, entity);
+        addEntityInContext(entityKey, entity);
+        addManagedEntityEntry(entityKey, entityEntry);
         return entity;
+    }
+
+    @Override
+    public void clear() {
+        persistenceContext.clear();
     }
 
     private void checkManagedEntity(Object entity, EntityEntry entityEntry) {
@@ -117,5 +118,41 @@ public class EntityManagerImpl implements EntityManager {
             throw new IllegalArgumentException("Detached entity can not be merged: "
                     + entity.getClass().getSimpleName());
         }
+    }
+
+    private void addEntityInContext(EntityKey entityKey, Object entity) {
+        persistenceContext.addEntity(entityKey, entity);
+        persistenceContext.addDatabaseSnapshot(entityKey, entity);
+    }
+
+    private void addManagedEntityEntry(EntityKey entityKey, EntityEntry entityEntry) {
+        entityEntry.updateStatus(Status.MANAGED);
+        persistenceContext.addEntry(entityKey, entityEntry);
+    }
+
+    private void manageChildEntity(Object entity) {
+        TableDefinition tableDefinition = entityPersister.getTableDefinition(entity);
+        tableDefinition.getAssociations().forEach(association -> {
+            final Class<?> associationClass = association.getAssociatedEntityClass();
+            try {
+                Object associationField = ReflectionFieldAccessUtils.accessAndGet(entity, tableDefinition.getEntityClass().getDeclaredField(association.getFieldName()));
+                if (associationField == null) {
+                    return;
+                }
+
+                if (associationField instanceof Iterable<?> iterable) {
+                    iterable.forEach(childEntity -> {
+                        if (childEntity != null && entityPersister.hasId(childEntity)) {
+                            final EntityKey entityKey = new EntityKey(entityPersister.getEntityId(childEntity), associationClass);
+                            addEntityInContext(entityKey, childEntity);
+                            addManagedEntityEntry(entityKey, new EntityEntry(Status.MANAGED, entityKey.id()));
+                        }
+                    });
+                }
+            } catch (NoSuchFieldException e) {
+                // logging
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

@@ -16,6 +16,7 @@ import persistence.sql.ddl.query.CreateTableQueryBuilder;
 import persistence.sql.ddl.query.DropQueryBuilder;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -65,8 +66,8 @@ class EntityLoaderTest {
         Dialect dialect = new H2Dialect();
         JdbcTemplate jdbcTemplate = new JdbcTemplate(server.getConnection());
 
-        String createTestEntity1TableQuery = new CreateTableQueryBuilder(dialect, EntityLoaderTestEntity1.class).build();
-        String createTestEntity2TableQuery = new CreateTableQueryBuilder(dialect, EntityLoaderTestEntity2.class).build();
+        String createTestEntity1TableQuery = new CreateTableQueryBuilder(dialect, EntityLoaderTestEntity1.class, null).build();
+        String createTestEntity2TableQuery = new CreateTableQueryBuilder(dialect, EntityLoaderTestEntity2.class, null).build();
 
         jdbcTemplate.execute(createTestEntity1TableQuery);
         jdbcTemplate.execute(createTestEntity2TableQuery);
