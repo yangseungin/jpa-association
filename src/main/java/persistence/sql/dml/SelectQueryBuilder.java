@@ -10,7 +10,7 @@ public class SelectQueryBuilder {
 
     public String findAll(EntityTable entityTable, EntityColumns entityColumns) {
         String tableName = entityTable.getTableName();
-        String tableColumns = getTableColumns(entityColumns);
+        String tableColumns = getTableColumns(entityColumns, tableName);
         return String.format("select %s FROM %s", tableColumns, tableName);
     }
 
@@ -21,11 +21,28 @@ public class SelectQueryBuilder {
         return String.format("%s where %s = %s", selectQuery, idField, formattedIdValue);
     }
 
-    private String getTableColumns(EntityColumns entityColumns) {
+    public String findAllWithJoin(EntityTable mainTable, EntityColumns mainColumns,
+                                  EntityTable joinTable, EntityColumns joinColumns) {
+        String mainTableName = mainTable.getTableName();
+        String joinTableName = joinTable.getTableName();
+        String mainTableColumns = getTableColumns(mainColumns, mainTableName);
+        String joinTableColumns = getTableColumns(joinColumns, joinTableName);
+
+        String selectColumns = String.join(", ", mainTableColumns, joinTableColumns);
+
+        String mainJoinColumn = EntityColumn.getJoinColumnName(mainTable.getEntityClass());
+        String joinJoinColumn = joinColumns.getIdFieldName();
+
+        return String.format("SELECT %s FROM %s LEFT JOIN %s ON %s.%s = %s.%s",
+                selectColumns, mainTableName, joinTableName,
+                mainTableName, mainJoinColumn, joinTableName, joinJoinColumn);
+    }
+
+    private String getTableColumns(EntityColumns entityColumns, String tableAlias) {
         return entityColumns.getColumns()
                 .stream()
                 .filter(entityColumn -> !entityColumn.isTransient())
-                .map(EntityColumn::getColumnName)
+                .map(entityColumn -> tableAlias + "." + entityColumn.getColumnName())
                 .collect(Collectors.joining(", "));
     }
 

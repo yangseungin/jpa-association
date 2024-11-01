@@ -3,9 +3,14 @@ package persistence.sql.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public class EntityColumn {
     private final Field field;
@@ -85,6 +90,16 @@ public class EntityColumn {
         } catch (IllegalAccessException e) {
             throw new RuntimeException("필드에 접근할 수 없음", e);
         }
+    }
+
+    public static String getJoinColumnName(Class<?> mainEntityClass) {
+        return Arrays.stream(mainEntityClass.getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(OneToMany.class) && field.getType().equals(List.class))
+                .map(field -> field.getAnnotation(JoinColumn.class))
+                .filter(Objects::nonNull)
+                .map(JoinColumn::name)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("조인 컬럼을 찾을 수 없음: " + mainEntityClass.getSimpleName()));
     }
 
     private String getFormattedId(Object idValue) {
