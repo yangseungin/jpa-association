@@ -43,7 +43,7 @@ class SelectQueryBuilderTest {
     }
 
     @Test
-    @DisplayName("Person 객체로 Select(findById) Query 만들기")
+    @DisplayName("Order 객체로 Join Query 만들기")
     void findAllWithJoinQuery() {
         Metadata mainMetaData = new Metadata(Order.class);
         Metadata joinMetaData = new Metadata(OrderItem.class);
@@ -52,6 +52,10 @@ class SelectQueryBuilderTest {
         String findByIdQuery = selectQueryBuilder.findAllWithJoin(mainMetaData.getEntityTable(), mainMetaData.getEntityColumns(),
                 joinMetaData.getEntityTable(), joinMetaData.getEntityColumns());
 
-        assertEquals(findByIdQuery, "SELECT orders.id, orders.orderNumber, orders.orderItems, order_items.id, order_items.product, order_items.quantity FROM orders LEFT JOIN order_items ON orders.order_id = order_items.id");
+        assertEquals(findByIdQuery, """
+                SELECT orders.id, orders.orderNumber, orders.orderItems, order_items.id, order_items.product, order_items.quantity \
+                FROM orders \
+                LEFT JOIN order_items ON orders.order_id = order_items.id\
+                """);
     }
 }
