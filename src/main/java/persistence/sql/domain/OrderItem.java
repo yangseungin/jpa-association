@@ -17,6 +17,15 @@ public class OrderItem {
 
     private Integer quantity;
 
+    public OrderItem() {
+    }
+
+    public OrderItem(Long id, String product, Integer quantity) {
+        this.id = id;
+        this.product = product;
+        this.quantity = quantity;
+    }
+
     public Long getId() {
         return id;
     }
