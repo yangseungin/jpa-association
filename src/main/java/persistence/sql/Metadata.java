@@ -1,11 +1,14 @@
 package persistence.sql;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.OneToMany;
 import persistence.sql.entity.EntityColumn;
 import persistence.sql.entity.EntityColumns;
 import persistence.sql.entity.EntityTable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.util.Arrays;
 
 public class Metadata {
     private final EntityTable entityTable;
@@ -68,5 +71,19 @@ public class Metadata {
 
     public EntityColumns getEntityColumns() {
         return entityColumns;
+    }
+
+    public Field getOneToManyField() {
+        return Arrays.stream(entityTable.getEntityClass().getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(OneToMany.class))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("OneToMany를 찾지 못하였음"));
+    }
+
+    public Class<?> getJoinEntityClass(Field oneToManyField) {
+        if (oneToManyField == null) {
+            return null;
+        }
+        return (Class<?>) ((ParameterizedType) oneToManyField.getGenericType()).getActualTypeArguments()[0];
     }
 }
