@@ -79,6 +79,10 @@ public class EntityColumn {
         return isTransient;
     }
 
+    public boolean isOneToMany() {
+        return field.isAnnotationPresent(OneToMany.class);
+    }
+
     public String getFieldValue(Object entity) {
         field.setAccessible(true);
         try {

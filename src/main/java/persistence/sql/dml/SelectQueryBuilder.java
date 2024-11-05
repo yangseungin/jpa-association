@@ -1,6 +1,5 @@
 package persistence.sql.dml;
 
-import persistence.sql.entity.EntityColumn;
 import persistence.sql.entity.EntityColumns;
 import persistence.sql.entity.EntityTable;
 
@@ -28,13 +27,12 @@ public class SelectQueryBuilder {
         String mainTableColumns = getTableColumns(mainColumns, mainTableName);
         String joinTableColumns = getTableColumns(joinColumns, joinTableName);
 
-        String selectColumns = String.join(", ", mainTableColumns, joinTableColumns);
-
-        String mainJoinColumn = EntityColumn.getJoinColumnName(mainTable.getEntityClass());
+        String mainJoinColumn = mainColumns.getIdFieldName();
         String joinJoinColumn = joinColumns.getIdFieldName();
 
-        return String.format("SELECT %s FROM %s LEFT JOIN %s ON %s.%s = %s.%s",
-                selectColumns, mainTableName, joinTableName,
+        return String.format("SELECT %s, %s FROM %s LEFT JOIN %s ON %s.%s = %s.%s",
+                mainTableColumns, joinTableColumns,
+                mainTableName, joinTableName,
                 mainTableName, mainJoinColumn, joinTableName, joinJoinColumn);
     }
 
@@ -42,6 +40,7 @@ public class SelectQueryBuilder {
         return entityColumns.getColumns()
                 .stream()
                 .filter(entityColumn -> !entityColumn.isTransient())
+                .filter(entityColumn -> !entityColumn.isOneToMany())
                 .map(entityColumn -> tableAlias + "." + entityColumn.getColumnName())
                 .collect(Collectors.joining(", "));
     }
