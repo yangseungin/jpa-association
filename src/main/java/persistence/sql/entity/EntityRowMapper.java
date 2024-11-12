@@ -1,5 +1,6 @@
 package persistence.sql.entity;
 
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 import jdbc.RowMapper;
 import persistence.sql.Metadata;
@@ -24,7 +25,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
         Metadata metadata = new Metadata(clazz);
         T entity = clazz.getDeclaredConstructor().newInstance();
         for (Field field : clazz.getDeclaredFields()) {
-            if (!field.isAnnotationPresent(Transient.class)) {
+            if (!field.isAnnotationPresent(Transient.class) && !field.isAnnotationPresent(OneToMany.class)) {
                 field.setAccessible(true);
                 field.set(entity, resultSet.getObject(metadata.getFieldName(field)));
             }
@@ -47,18 +48,19 @@ public class EntityRowMapper<T> implements RowMapper<T> {
         List<Object> children = new ArrayList<>();
         Class<?> childType = (Class<?>) ((ParameterizedType) listField.getGenericType()).getActualTypeArguments()[0];
 
-        while (resultSet.next()) {
+        do {
             Object childEntity = childType.getDeclaredConstructor().newInstance();
 
             for (Field childField : childType.getDeclaredFields()) {
                 if (!childField.isAnnotationPresent(Transient.class)) {
                     childField.setAccessible(true);
-                    childField.set(childEntity, resultSet.getObject(metadata.getFieldName(childField)));
+                    String fieldName = metadata.getFieldName(childField);
+                    childField.set(childEntity, resultSet.getObject(fieldName));
                 }
             }
 
             children.add(childEntity);
-        }
+        } while (resultSet.next());
 
         return children;
     }

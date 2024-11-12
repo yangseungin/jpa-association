@@ -47,6 +47,10 @@ public class EntityColumn {
         return !annotation.nullable();
     }
 
+    public Field getField() {
+        return field;
+    }
+
     public String getColumnName() {
         return columnName;
     }
@@ -112,5 +116,6 @@ public class EntityColumn {
         }
         return idValue.toString();
     }
+
 }
 

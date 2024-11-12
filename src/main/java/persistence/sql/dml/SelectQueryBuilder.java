@@ -28,7 +28,7 @@ public class SelectQueryBuilder {
         String joinTableColumns = getTableColumns(joinColumns, joinTableName);
 
         String mainJoinColumn = mainColumns.getIdFieldName();
-        String joinJoinColumn = joinColumns.getIdFieldName();
+        String joinJoinColumn = mainColumns.getFKFieldName();
 
         return String.format("SELECT %s, %s FROM %s LEFT JOIN %s ON %s.%s = %s.%s",
                 mainTableColumns, joinTableColumns,
