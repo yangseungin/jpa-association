@@ -54,8 +54,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
             for (Field childField : childType.getDeclaredFields()) {
                 if (!childField.isAnnotationPresent(Transient.class)) {
                     childField.setAccessible(true);
-                    String fieldName = metadata.getFieldName(childField);
-                    childField.set(childEntity, resultSet.getObject(fieldName));
+                    childField.set(childEntity, resultSet.getObject(metadata.getFieldName(childField)));
                 }
             }
 
