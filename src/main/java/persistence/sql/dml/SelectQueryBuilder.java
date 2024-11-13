@@ -1,8 +1,11 @@
 package persistence.sql.dml;
 
+import jakarta.persistence.JoinColumn;
+import persistence.sql.entity.EntityColumn;
 import persistence.sql.entity.EntityColumns;
 import persistence.sql.entity.EntityTable;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class SelectQueryBuilder {
@@ -28,12 +31,30 @@ public class SelectQueryBuilder {
         String joinTableColumns = getTableColumns(joinColumns, joinTableName);
 
         String mainJoinColumn = mainColumns.getIdFieldName();
-        String joinJoinColumn = mainColumns.getFKFieldName();
+        String joinJoinColumn = getJoinColumnName(mainColumns);
 
         return String.format("SELECT %s, %s FROM %s LEFT JOIN %s ON %s.%s = %s.%s",
                 mainTableColumns, joinTableColumns,
                 mainTableName, joinTableName,
                 mainTableName, mainJoinColumn, joinTableName, joinJoinColumn);
+    }
+
+    private String getJoinColumnName(EntityColumns mainColumns) {
+        List<EntityColumn> oneToManyColumns = mainColumns.getOneToManyColumns();
+
+        if (oneToManyColumns.isEmpty()) {
+            return null;
+        }
+
+        return oneToManyColumns.stream()
+                .map(oneToManyColumn -> {
+                    JoinColumn joinColumn = oneToManyColumn.getField().getAnnotation(JoinColumn.class);
+                    if (joinColumn != null) {
+                        return joinColumn.name();
+                    }
+                    return oneToManyColumn.getField().getName() + "_id";
+                })
+                .collect(Collectors.joining(", "));
     }
 
     private String getTableColumns(EntityColumns entityColumns, String tableAlias) {

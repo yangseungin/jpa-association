@@ -49,21 +49,4 @@ public class EntityColumns {
                 .collect(Collectors.toList());
     }
 
-    public String getFKFieldName() {
-        List<EntityColumn> oneToManyColumns = getOneToManyColumns();
-
-        if (oneToManyColumns.isEmpty()) {
-            return null;
-        }
-
-        return oneToManyColumns.stream()
-                .map(oneToManyColumn -> {
-                    JoinColumn joinColumn = oneToManyColumn.getField().getAnnotation(JoinColumn.class);
-                    if (joinColumn != null) {
-                        return joinColumn.name();
-                    }
-                    return oneToManyColumn.getField().getName() + "_id";
-                })
-                .collect(Collectors.joining(", "));
-    }
 }
