@@ -100,16 +100,6 @@ public class EntityColumn {
         }
     }
 
-    public static String getJoinColumnName(Class<?> mainEntityClass) {
-        return Arrays.stream(mainEntityClass.getDeclaredFields())
-                .filter(field -> field.isAnnotationPresent(OneToMany.class) && field.getType().equals(List.class))
-                .map(field -> field.getAnnotation(JoinColumn.class))
-                .filter(Objects::nonNull)
-                .map(JoinColumn::name)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("조인 컬럼을 찾을 수 없음: " + mainEntityClass.getSimpleName()));
-    }
-
     private String getFormattedId(Object idValue) {
         if (idValue instanceof String) {
             return String.format(("'%s'"), idValue);

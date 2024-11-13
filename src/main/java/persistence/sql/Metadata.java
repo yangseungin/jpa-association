@@ -85,7 +85,6 @@ public class Metadata {
         List<Class<?>> joinEntityClasses = new ArrayList<>();
 
         for (EntityColumn oneToManyColumn : oneToManyColumns) {
-            // OneToMany 필드의 자식 엔티티 클래스 반환
             Class<?> joinEntityClass = getJoinEntityClass(oneToManyColumn);
             joinEntityClasses.add(joinEntityClass);
         }
