@@ -43,21 +43,27 @@ public class EntityColumns {
         throw new IllegalArgumentException("@Id 어노테이션이 존재하지 않음");
     }
 
-    public String getFKFieldName() {
-        EntityColumn oneToManyColumn = columns.stream()
+    public List<EntityColumn> getOneToManyColumns() {
+        return columns.stream()
                 .filter(EntityColumn::isOneToMany)
-                .findFirst()
-                .orElse(null);
+                .collect(Collectors.toList());
+    }
 
-        if (oneToManyColumn == null) {
+    public String getFKFieldName() {
+        List<EntityColumn> oneToManyColumns = getOneToManyColumns();
+
+        if (oneToManyColumns.isEmpty()) {
             return null;
         }
 
-        JoinColumn joinColumn = oneToManyColumn.getField().getAnnotation(JoinColumn.class);
-        if (joinColumn != null) {
-            return joinColumn.name();
-        }
-
-        return oneToManyColumn.getField().getName() + "_id";
+        return oneToManyColumns.stream()
+                .map(oneToManyColumn -> {
+                    JoinColumn joinColumn = oneToManyColumn.getField().getAnnotation(JoinColumn.class);
+                    if (joinColumn != null) {
+                        return joinColumn.name();
+                    }
+                    return oneToManyColumn.getField().getName() + "_id";
+                })
+                .collect(Collectors.joining(", "));
     }
 }

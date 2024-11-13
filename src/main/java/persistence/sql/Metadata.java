@@ -1,14 +1,15 @@
 package persistence.sql;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.OneToMany;
 import persistence.sql.entity.EntityColumn;
 import persistence.sql.entity.EntityColumns;
 import persistence.sql.entity.EntityTable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Metadata {
     private final EntityTable entityTable;
@@ -73,17 +74,28 @@ public class Metadata {
         return entityColumns;
     }
 
-    public Field getOneToManyField() {
-        return Arrays.stream(entityTable.getEntityClass().getDeclaredFields())
-                .filter(field -> field.isAnnotationPresent(OneToMany.class))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("OneToMany를 찾지 못하였음"));
+    public List<EntityColumn> getOneToManyColumns() {
+        return entityColumns.getColumns()
+                .stream()
+                .filter(EntityColumn::isOneToMany)
+                .collect(Collectors.toList());
     }
 
-    public Class<?> getJoinEntityClass(Field oneToManyField) {
-        if (oneToManyField == null) {
+    public List<Class<?>> getJoinEntityClasses(List<EntityColumn> oneToManyColumns) {
+        List<Class<?>> joinEntityClasses = new ArrayList<>();
+
+        for (EntityColumn oneToManyColumn : oneToManyColumns) {
+            // OneToMany 필드의 자식 엔티티 클래스 반환
+            Class<?> joinEntityClass = getJoinEntityClass(oneToManyColumn);
+            joinEntityClasses.add(joinEntityClass);
+        }
+
+        return joinEntityClasses;
+    }
+    public Class<?> getJoinEntityClass(EntityColumn oneToManyColumn) {
+        if (oneToManyColumn == null) {
             return null;
         }
-        return (Class<?>) ((ParameterizedType) oneToManyField.getGenericType()).getActualTypeArguments()[0];
+        return (Class<?>) ((ParameterizedType) oneToManyColumn.getField().getGenericType()).getActualTypeArguments()[0];
     }
 }

@@ -53,9 +53,9 @@ class SelectQueryBuilderTest {
                 joinMetaData.getEntityTable(), joinMetaData.getEntityColumns());
 
         assertEquals(findByIdQuery, """
-                SELECT orders.id, orders.orderNumber, orders.orderItems, order_items.id, order_items.product, order_items.quantity \
+                SELECT orders.id, orders.orderNumber, order_items.id, order_items.product, order_items.quantity \
                 FROM orders \
-                LEFT JOIN order_items ON orders.order_id = order_items.id\
+                LEFT JOIN order_items ON orders.id = order_items.order_id\
                 """);
     }
 }

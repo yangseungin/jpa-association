@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -23,7 +24,7 @@ public class Order {
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
-    private List<OrderItem> orderItems;
+    private List<OrderItem> orderItems = new ArrayList<>();;
 
     public Order() {
     }
@@ -31,6 +32,7 @@ public class Order {
     public Order(Long id, String orderNumber) {
         this.id = id;
         this.orderNumber = orderNumber;
+        this.orderItems = new ArrayList<>();
     }
 
     public Long getId() {

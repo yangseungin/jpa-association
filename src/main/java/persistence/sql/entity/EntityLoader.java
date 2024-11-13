@@ -4,7 +4,6 @@ import jdbc.JdbcTemplate;
 import persistence.sql.Metadata;
 import persistence.sql.dml.SelectQueryBuilder;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.util.List;
 
@@ -27,16 +26,23 @@ public class EntityLoader {
 
     public <T> List<T> loadEntitiesWithJoin(Class<T> clazz) {
         Metadata mainMetadata = new Metadata(clazz);
+        List<EntityColumn> oneToManyColumns = mainMetadata.getOneToManyColumns();
 
-        Field oneToManyField = mainMetadata.getOneToManyField();
-
-        Class<?> joinEntityClass = mainMetadata.getJoinEntityClass(oneToManyField);
-        Metadata joinMetadata = new Metadata(joinEntityClass);
+        List<Class<?>> joinEntityClasses = mainMetadata.getJoinEntityClasses(oneToManyColumns);
 
         String selectWithJoinQuery = selectQueryBuilder.findAllWithJoin(
                 mainMetadata.getEntityTable(), mainMetadata.getEntityColumns(),
-                joinMetadata.getEntityTable(), joinMetadata.getEntityColumns()
+                mainMetadata.getEntityTable(), mainMetadata.getEntityColumns()
         );
+
+        for (Class<?> joinEntityClass : joinEntityClasses) {
+            Metadata joinMetadata = new Metadata(joinEntityClass);
+            selectWithJoinQuery = selectQueryBuilder.findAllWithJoin(
+                    mainMetadata.getEntityTable(), mainMetadata.getEntityColumns(),
+                    joinMetadata.getEntityTable(), joinMetadata.getEntityColumns()
+            );
+
+        }
 
         return jdbcTemplate.query(selectWithJoinQuery, new EntityRowMapper<>(clazz));
     }
