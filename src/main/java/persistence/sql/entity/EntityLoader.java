@@ -26,9 +26,8 @@ public class EntityLoader {
 
     public <T> List<T> loadEntitiesWithJoin(Class<T> clazz) {
         Metadata mainMetadata = new Metadata(clazz);
-        List<EntityColumn> oneToManyColumns = mainMetadata.getOneToManyColumns();
 
-        List<Class<?>> joinEntityClasses = mainMetadata.getJoinEntityClasses(oneToManyColumns);
+        List<Class<?>> joinEntityClasses = mainMetadata.getJoinEntityClasses();
 
         String selectWithJoinQuery = selectQueryBuilder.findAllWithJoin(
                 mainMetadata.getEntityTable(), mainMetadata.getEntityColumns(),

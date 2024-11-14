@@ -81,8 +81,10 @@ public class Metadata {
                 .collect(Collectors.toList());
     }
 
-    public List<Class<?>> getJoinEntityClasses(List<EntityColumn> oneToManyColumns) {
+    public List<Class<?>> getJoinEntityClasses() {
         List<Class<?>> joinEntityClasses = new ArrayList<>();
+
+        List<EntityColumn> oneToManyColumns = getOneToManyColumns();
 
         for (EntityColumn oneToManyColumn : oneToManyColumns) {
             Class<?> joinEntityClass = getJoinEntityClass(oneToManyColumn);
