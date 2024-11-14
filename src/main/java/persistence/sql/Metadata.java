@@ -4,9 +4,9 @@ import jakarta.persistence.Column;
 import persistence.sql.entity.EntityColumn;
 import persistence.sql.entity.EntityColumns;
 import persistence.sql.entity.EntityTable;
+import persistence.sql.entity.OneToManyColumn;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,29 +74,24 @@ public class Metadata {
         return entityColumns;
     }
 
-    public List<EntityColumn> getOneToManyColumns() {
+    public List<OneToManyColumn> getOneToManyColumns() {
         return entityColumns.getColumns()
                 .stream()
-                .filter(EntityColumn::isOneToMany)
+                .map(EntityColumn::getOneToManyColumn)
+                .filter(oneToManyColumn -> oneToManyColumn != null)
                 .collect(Collectors.toList());
     }
 
     public List<Class<?>> getJoinEntityClasses() {
         List<Class<?>> joinEntityClasses = new ArrayList<>();
 
-        List<EntityColumn> oneToManyColumns = getOneToManyColumns();
+        List<OneToManyColumn> oneToManyColumns = getOneToManyColumns();
 
-        for (EntityColumn oneToManyColumn : oneToManyColumns) {
-            Class<?> joinEntityClass = getJoinEntityClass(oneToManyColumn);
+        for (OneToManyColumn oneToManyColumn : oneToManyColumns) {
+            Class<?> joinEntityClass = oneToManyColumn.getJoinEntityClass();
             joinEntityClasses.add(joinEntityClass);
         }
 
         return joinEntityClasses;
-    }
-    public Class<?> getJoinEntityClass(EntityColumn oneToManyColumn) {
-        if (oneToManyColumn == null) {
-            return null;
-        }
-        return (Class<?>) ((ParameterizedType) oneToManyColumn.getField().getGenericType()).getActualTypeArguments()[0];
     }
 }

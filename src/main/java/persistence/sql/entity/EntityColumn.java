@@ -3,14 +3,10 @@ package persistence.sql.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 public class EntityColumn {
     private final Field field;
@@ -85,6 +81,13 @@ public class EntityColumn {
 
     public boolean isOneToMany() {
         return field.isAnnotationPresent(OneToMany.class);
+    }
+
+    public OneToManyColumn getOneToManyColumn() {
+        if (isOneToMany()) {
+            return new OneToManyColumn(this, field);
+        }
+        return null;
     }
 
     public String getFieldValue(Object entity) {
