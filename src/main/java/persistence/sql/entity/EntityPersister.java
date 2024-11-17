@@ -42,10 +42,9 @@ public class EntityPersister {
     }
 
     public void insert(Object entity) {
-        Long parentId = insertEntity(entity);
+        insertEntity(entity);
 
-        insertChildEntities(entity, parentId);
-
+        insertChildEntities(entity);
     }
 
     private Long insertEntity(Object entity) {
@@ -55,8 +54,10 @@ public class EntityPersister {
         return idValue;
     }
 
-    private void insertChildEntities(Object entity, Long parentId) {
+    private void insertChildEntities(Object entity) {
         List<EntityColumn> oneToManyColumns = entityColumns.getOneToManyColumns();
+
+        Long parentId = getIdValue(entity);
 
         for (EntityColumn oneToManyColumn : oneToManyColumns) {
             if (oneToManyColumn.isOneToMany()) {
@@ -81,7 +82,6 @@ public class EntityPersister {
     private void insertChildEntity(Object childEntity, Long parentId) {
         EntityColumns childEntityColumns = EntityColumns.from(childEntity.getClass());
         String insertQuery = insertQueryBuilder.getInsertQuery(entityTable, childEntityColumns, childEntity, parentId);
-        System.out.println("!"+insertQuery);
         jdbcTemplate.execute(insertQuery);
     }
 
