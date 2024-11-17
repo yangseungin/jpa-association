@@ -3,7 +3,6 @@ package persistence.sql.entity;
 import database.DatabaseServer;
 import database.H2;
 import jdbc.JdbcTemplate;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,9 @@ import persistence.sql.domain.Order;
 
 import java.sql.SQLException;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 class EntityLoaderTest {
 
@@ -26,8 +28,8 @@ class EntityLoaderTest {
     }
 
     @Test
-    @DisplayName("find 메서드는 주어진 클래스와 연관관계에 있는 엔티티까지 반환한다.")
-    void find_containsOneToMany() {
+    @DisplayName("loadEntitiesWithJoin 메서드는 주어진 클래스와 연관관계에 있는 엔티티까지 반환한다.")
+    void loadEntityContainsOneToMany() {
         //given
         String orderCreateQuery = "CREATE TABLE orders (id BIGINT AUTO_INCREMENT PRIMARY KEY, orderNumber VARCHAR(255));";
         String orderItemCreateQuery = "CREATE TABLE order_items (id BIGINT AUTO_INCREMENT PRIMARY KEY, product VARCHAR(255), quantity INT, order_id BIGINT);";
@@ -42,8 +44,17 @@ class EntityLoaderTest {
         List<Order> orders = entityLoader.loadEntitiesWithJoin(Order.class);
 
         //then
-        Assertions.assertThat(orders.get(0).getOrderItems()).hasSize(3);
-        Assertions.assertThat(orders.get(0).getOrderItems().get(0).getProduct()).isEqualTo("감자");
+
+        assertAll(
+                () -> assertThat(orders.get(0).getOrderItems()).hasSize(3),
+                () -> assertThat(orders.get(0).getOrderItems().get(0).getProduct()).isEqualTo("감자"),
+                () -> assertThat(orders.get(0).getOrderItems().get(0).getQuantity()).isEqualTo(5),
+                () -> assertThat(orders.get(0).getOrderItems().get(1).getProduct()).isEqualTo("고구마"),
+                () -> assertThat(orders.get(0).getOrderItems().get(1).getQuantity()).isEqualTo(6),
+                () -> assertThat(orders.get(0).getOrderItems().get(2).getProduct()).isEqualTo("호박"),
+                () -> assertThat(orders.get(0).getOrderItems().get(2).getQuantity()).isEqualTo(1)
+        );
+
     }
 
 }
