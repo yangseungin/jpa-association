@@ -57,13 +57,11 @@ public class EntityPersister {
     private void insertChildEntities(Object entity) {
         List<EntityColumn> oneToManyColumns = entityColumns.getOneToManyColumns();
 
-        Long parentId = getIdValue(entity);
-
         for (EntityColumn oneToManyColumn : oneToManyColumns) {
             if (oneToManyColumn.isOneToMany()) {
                 List<?> children = getChildren(entity, oneToManyColumn);
                 for (Object child : children) {
-                    insertChildEntity(child, parentId);
+                    insertChildEntity(child, entity);
                 }
             }
         }
@@ -79,9 +77,10 @@ public class EntityPersister {
         }
     }
 
-    private void insertChildEntity(Object childEntity, Long parentId) {
+    private void insertChildEntity(Object childEntity, Object parentEntity) {
         EntityColumns childEntityColumns = EntityColumns.from(childEntity.getClass());
-        String insertQuery = insertQueryBuilder.getInsertQuery(entityTable, childEntityColumns, childEntity, parentId);
+        EntityTable childEntityTable = EntityTable.from(childEntity.getClass());
+        String insertQuery = insertQueryBuilder.getInsertQuery(childEntityTable, childEntityColumns, childEntity, parentEntity);
         jdbcTemplate.execute(insertQuery);
     }
 

@@ -1,6 +1,5 @@
 package persistence.sql.entity;
 
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Transient;
 
 import java.lang.reflect.Field;

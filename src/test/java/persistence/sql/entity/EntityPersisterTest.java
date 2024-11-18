@@ -9,6 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import persistence.sql.ddl.CreateQueryBuilder;
 import persistence.sql.ddl.DropQueryBuilder;
+import persistence.sql.domain.Order;
+import persistence.sql.domain.OrderItem;
 import persistence.sql.domain.Person;
 
 import java.sql.SQLException;
@@ -21,11 +23,11 @@ class EntityPersisterTest {
     private EntityPersister entityPersister;
     private EntityLoader entityLoader;
     private Person expectedPerson;
-
+    private DatabaseServer server;
 
     @BeforeEach
     void init() throws SQLException {
-        final DatabaseServer server = new H2();
+        server = new H2();
         server.start();
         CreateQueryBuilder queryBuilder = new CreateQueryBuilder(Person.class);
         String tableQuery = queryBuilder.createTableQuery(Person.class);
@@ -58,6 +60,29 @@ class EntityPersisterTest {
         Person insertedPerson = entityLoader.loadEntity(Person.class, 1L);
 
         assertThat(insertedPerson.getEmail()).isEqualTo(expectedPerson.getEmail());
+
+    }
+
+    @Test
+    @DisplayName("onetomany관계에서의 insert 구현")
+    void insert2() throws SQLException {
+        String orderCreateQuery = "CREATE TABLE orders (id BIGINT AUTO_INCREMENT PRIMARY KEY, orderNumber VARCHAR(255) NOT NULL);";
+        String orderItemCreateQuery = "CREATE TABLE order_items (id BIGINT AUTO_INCREMENT PRIMARY KEY, product VARCHAR(255) NOT NULL, quantity INT NOT NULL, order_id BIGINT, FOREIGN KEY (order_id) REFERENCES orders(id));";
+        jdbcTemplate.execute(orderCreateQuery);
+        jdbcTemplate.execute(orderItemCreateQuery);
+
+        entityPersister = new EntityPersister(Order.class, server.getConnection());
+        entityLoader = new EntityLoader(server.getConnection());
+
+        Order order = new Order(1L, "농작물_주문번호1");
+        OrderItem orderItem1 = new OrderItem(1L, "감자", 3);
+        OrderItem orderItem2 = new OrderItem(2L, "고구마", 1);
+        order.getOrderItems().add(orderItem1);
+        order.getOrderItems().add(orderItem2);
+        entityPersister.insert(order);
+
+        jdbcTemplate.execute("drop table order_items");
+        jdbcTemplate.execute("drop table orders");
 
     }
 
