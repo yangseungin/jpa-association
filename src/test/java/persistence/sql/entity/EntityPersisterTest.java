@@ -14,6 +14,7 @@ import persistence.sql.domain.OrderItem;
 import persistence.sql.domain.Person;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -81,9 +82,17 @@ class EntityPersisterTest {
         order.getOrderItems().add(orderItem2);
         entityPersister.insert(order);
 
+        String selectQuery = "SELECT * FROM order_items WHERE order_id = 1";
+        List<OrderItem> selectResult = jdbcTemplate.query(selectQuery, new EntityRowMapper<>(OrderItem.class));
+
+        assertThat(selectResult).hasSize(2);
+        assertThat(selectResult.get(0).getProduct()).isEqualTo(orderItem1.getProduct());
+        assertThat(selectResult.get(0).getQuantity()).isEqualTo(orderItem1.getQuantity());
+        assertThat(selectResult.get(1).getProduct()).isEqualTo(orderItem2.getProduct());
+        assertThat(selectResult.get(1).getQuantity()).isEqualTo(orderItem2.getQuantity());
+
         jdbcTemplate.execute("drop table order_items");
         jdbcTemplate.execute("drop table orders");
-
     }
 
     @Test

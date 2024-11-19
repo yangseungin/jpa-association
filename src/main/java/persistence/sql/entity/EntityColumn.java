@@ -29,6 +29,7 @@ public class EntityColumn {
     }
 
     public static EntityColumn from(Field field) {
+        OneToManyColumn oneToManyColumn = field.isAnnotationPresent(OneToMany.class) ? new OneToManyColumn(field) : null;
         return new EntityColumn(
                 field,
                 getFieldName(field),
@@ -36,7 +37,7 @@ public class EntityColumn {
                 isColumnNullable(field),
                 field.isAnnotationPresent(GeneratedValue.class),
                 field.isAnnotationPresent(Transient.class),
-                field.isAnnotationPresent(OneToMany.class) ? new OneToManyColumn(field) : null
+                oneToManyColumn
         );
     }
 
