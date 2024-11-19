@@ -30,28 +30,10 @@ public class InsertQueryBuilder {
                 .collect(Collectors.toList());
 
         if (parentEntity != null) {
-            columns.add(getFKColumnFromParentEntity(parentEntity));
+            columns.add(entityColumns.getForeignKeyColumnName(parentEntity));
         }
 
         return String.join(", ", columns);
-    }
-
-    private String getFKColumnFromParentEntity(Object parentEntity) {
-        try {
-            Field oneToManyField = Arrays.stream(parentEntity.getClass().getDeclaredFields())
-                    .filter(field -> field.isAnnotationPresent(OneToMany.class))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("OneToMany 필드가 없음"));
-
-            JoinColumn joinColumn = oneToManyField.getAnnotation(JoinColumn.class);
-            if (joinColumn != null) {
-                return joinColumn.name();
-            }
-
-            return oneToManyField.getName() + "_id";
-        } catch (Exception e) {
-            throw new RuntimeException("부모 엔티티로부터 외래키를 추출할 수 없음", e);
-        }
     }
 
     private String valueClause(EntityColumns entityColumns, Object object, Long parentId) {

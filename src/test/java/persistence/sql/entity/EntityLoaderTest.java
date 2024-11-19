@@ -55,6 +55,10 @@ class EntityLoaderTest {
                 () -> assertThat(orders.get(0).getOrderItems().get(2).getQuantity()).isEqualTo(1)
         );
 
+
+        jdbcTemplate.execute("drop table order_items");
+        jdbcTemplate.execute("drop table orders");
+
     }
 
 }
