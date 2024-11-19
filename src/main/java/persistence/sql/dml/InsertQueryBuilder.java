@@ -1,11 +1,11 @@
 package persistence.sql.dml;
 
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import persistence.sql.entity.EntityColumn;
 import persistence.sql.entity.EntityColumns;
 import persistence.sql.entity.EntityTable;
+import persistence.sql.entity.OneToManyColumn;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -30,10 +30,18 @@ public class InsertQueryBuilder {
                 .collect(Collectors.toList());
 
         if (parentEntity != null) {
-            columns.add(entityColumns.getForeignKeyColumnName(parentEntity));
+            OneToManyColumn oneToManyColumn = new OneToManyColumn(findOneToManyField(parentEntity.getClass()));
+            columns.add(oneToManyColumn.getForeignKeyColumnName());
         }
 
         return String.join(", ", columns);
+    }
+
+    private Field findOneToManyField(Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(OneToMany.class))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("OneToMany 필드를 찾을 수 없습니다."));
     }
 
     private String valueClause(EntityColumns entityColumns, Object object, Long parentId) {
