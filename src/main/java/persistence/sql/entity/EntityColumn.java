@@ -16,13 +16,16 @@ public class EntityColumn {
     private final boolean isGeneratedValue;
     private final boolean isTransient;
 
-    public EntityColumn(Field field, String columnName, boolean isPrimaryKey, boolean isNullable, boolean isGeneratedValue, boolean isTransient) {
+    private final OneToManyColumn oneToManyColumn;
+
+    public EntityColumn(Field field, String columnName, boolean isPrimaryKey, boolean isNullable, boolean isGeneratedValue, boolean isTransient, OneToManyColumn oneToManyColumn) {
         this.field = field;
         this.columnName = columnName;
         this.isPrimaryKey = isPrimaryKey;
         this.isNullable = isNullable;
         this.isGeneratedValue = isGeneratedValue;
         this.isTransient = isTransient;
+        this.oneToManyColumn = oneToManyColumn;
     }
 
     public static EntityColumn from(Field field) {
@@ -32,7 +35,9 @@ public class EntityColumn {
                 field.isAnnotationPresent(Id.class),
                 isColumnNullable(field),
                 field.isAnnotationPresent(GeneratedValue.class),
-                field.isAnnotationPresent(Transient.class));
+                field.isAnnotationPresent(Transient.class),
+                field.isAnnotationPresent(OneToMany.class) ? new OneToManyColumn(field) : null
+        );
     }
 
     private static boolean isColumnNullable(Field field) {
@@ -84,10 +89,7 @@ public class EntityColumn {
     }
 
     public OneToManyColumn getOneToManyColumn() {
-        if (isOneToMany()) {
-            return new OneToManyColumn(this, field);
-        }
-        return null;
+        return oneToManyColumn;
     }
 
     public String getFieldValue(Object entity) {
