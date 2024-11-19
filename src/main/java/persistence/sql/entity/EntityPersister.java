@@ -60,10 +60,14 @@ public class EntityPersister {
         for (EntityColumn oneToManyColumn : oneToManyColumns) {
             if (oneToManyColumn.isOneToMany()) {
                 List<?> children = getChildren(entity, oneToManyColumn);
-                for (Object child : children) {
-                    insertChildEntity(child, entity);
-                }
+                insertChildren(entity, children);
             }
+        }
+    }
+
+    private void insertChildren(Object entity, List<?> children) {
+        for (Object child : children) {
+            insertChildEntity(child, entity);
         }
     }
 
