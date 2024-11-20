@@ -47,13 +47,6 @@ public class InsertQueryBuilder {
         return null;
     }
 
-    private Field findOneToManyField(Class<?> clazz) {
-        return Arrays.stream(clazz.getDeclaredFields())
-                .filter(field -> field.isAnnotationPresent(OneToMany.class))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("OneToMany 필드를 찾을 수 없습니다."));
-    }
-
     private String valueClause(EntityColumns entityColumns, Object object, Long parentId) {
         List<String> values = entityColumns.getColumns().stream()
                 .filter(column -> !column.isGeneratedValue())
