@@ -29,22 +29,20 @@ public class InsertQueryBuilder {
                 .collect(Collectors.toList());
 
         if (parentEntity != null) {
-            EntityColumn oneToManyColumn = getOneToManyColumnFromParentEntity(parentEntity);
-            if (oneToManyColumn != null) {
+            List<Field> oneToManyFields = findOneToManyFields(parentEntity.getClass());
+            for (Field oneToManyField : oneToManyFields) {
+                EntityColumn oneToManyColumn = EntityColumn.from(oneToManyField);
                 columns.add(oneToManyColumn.getOneToManyColumn().getForeignKeyColumnName());
             }
         }
 
         return String.join(", ", columns);
     }
-    private EntityColumn getOneToManyColumnFromParentEntity(Object parentEntity) {
-        for (Field field : parentEntity.getClass().getDeclaredFields()) {
-            if (field.isAnnotationPresent(OneToMany.class)) {
-                return EntityColumn.from(field);
-            }
-        }
 
-        return null;
+    private List<Field> findOneToManyFields(Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(OneToMany.class))
+                .collect(Collectors.toList());
     }
 
     private String valueClause(EntityColumns entityColumns, Object object, Long parentId) {
