@@ -5,7 +5,6 @@ import jakarta.persistence.OneToMany;
 import persistence.sql.entity.EntityColumn;
 import persistence.sql.entity.EntityColumns;
 import persistence.sql.entity.EntityTable;
-import persistence.sql.entity.OneToManyColumn;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -30,11 +29,22 @@ public class InsertQueryBuilder {
                 .collect(Collectors.toList());
 
         if (parentEntity != null) {
-            OneToManyColumn oneToManyColumn = new OneToManyColumn(findOneToManyField(parentEntity.getClass()));
-            columns.add(oneToManyColumn.getForeignKeyColumnName());
+            EntityColumn oneToManyColumn = getOneToManyColumnFromParentEntity(parentEntity);
+            if (oneToManyColumn != null) {
+                columns.add(oneToManyColumn.getOneToManyColumn().getForeignKeyColumnName());
+            }
         }
 
         return String.join(", ", columns);
+    }
+    private EntityColumn getOneToManyColumnFromParentEntity(Object parentEntity) {
+        for (Field field : parentEntity.getClass().getDeclaredFields()) {
+            if (field.isAnnotationPresent(OneToMany.class)) {
+                return EntityColumn.from(field);
+            }
+        }
+
+        return null;
     }
 
     private Field findOneToManyField(Class<?> clazz) {
