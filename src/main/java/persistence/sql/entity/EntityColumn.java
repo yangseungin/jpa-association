@@ -3,6 +3,7 @@ package persistence.sql.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 
 import java.lang.reflect.Field;
@@ -15,23 +16,29 @@ public class EntityColumn {
     private final boolean isGeneratedValue;
     private final boolean isTransient;
 
-    public EntityColumn(Field field, String columnName, boolean isPrimaryKey, boolean isNullable, boolean isGeneratedValue, boolean isTransient) {
+    private final OneToManyColumn oneToManyColumn;
+
+    public EntityColumn(Field field, String columnName, boolean isPrimaryKey, boolean isNullable, boolean isGeneratedValue, boolean isTransient, OneToManyColumn oneToManyColumn) {
         this.field = field;
         this.columnName = columnName;
         this.isPrimaryKey = isPrimaryKey;
         this.isNullable = isNullable;
         this.isGeneratedValue = isGeneratedValue;
         this.isTransient = isTransient;
+        this.oneToManyColumn = oneToManyColumn;
     }
 
     public static EntityColumn from(Field field) {
+        OneToManyColumn oneToManyColumn = field.isAnnotationPresent(OneToMany.class) ? new OneToManyColumn(field) : null;
         return new EntityColumn(
                 field,
                 getFieldName(field),
                 field.isAnnotationPresent(Id.class),
                 isColumnNullable(field),
                 field.isAnnotationPresent(GeneratedValue.class),
-                field.isAnnotationPresent(Transient.class));
+                field.isAnnotationPresent(Transient.class),
+                oneToManyColumn
+        );
     }
 
     private static boolean isColumnNullable(Field field) {
@@ -40,6 +47,10 @@ public class EntityColumn {
         }
         Column annotation = field.getAnnotation(Column.class);
         return !annotation.nullable();
+    }
+
+    public Field getField() {
+        return field;
     }
 
     public String getColumnName() {
@@ -74,6 +85,14 @@ public class EntityColumn {
         return isTransient;
     }
 
+    public boolean isOneToMany() {
+        return field.isAnnotationPresent(OneToMany.class);
+    }
+
+    public OneToManyColumn getOneToManyColumn() {
+        return oneToManyColumn;
+    }
+
     public String getFieldValue(Object entity) {
         field.setAccessible(true);
         try {
@@ -93,5 +112,6 @@ public class EntityColumn {
         }
         return idValue.toString();
     }
+
 }
 

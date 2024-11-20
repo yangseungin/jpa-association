@@ -3,7 +3,8 @@ package persistence.sql.dml;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import persistence.sql.Metadata;
-import persistence.sql.dml.SelectQueryBuilder;
+import persistence.sql.domain.Order;
+import persistence.sql.domain.OrderItem;
 import persistence.sql.domain.Person;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,7 +19,7 @@ class SelectQueryBuilderTest {
         SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder();
         String findAllQuery = selectQueryBuilder.findAll(metadata.getEntityTable(), metadata.getEntityColumns());
 
-        assertEquals(findAllQuery, "select id, nick_name, old, email FROM users");
+        assertEquals(findAllQuery, "select users.id, users.nick_name, users.old, users.email FROM users");
     }
 
     @Test
@@ -28,7 +29,7 @@ class SelectQueryBuilderTest {
         SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder();
         String findByIdQuery = selectQueryBuilder.findById(metadata.getEntityTable(), metadata.getEntityColumns(), 1L);
 
-        assertEquals(findByIdQuery, "select id, nick_name, old, email FROM users where id = 1");
+        assertEquals(findByIdQuery, "select users.id, users.nick_name, users.old, users.email FROM users where id = 1");
     }
 
     @Test
@@ -38,6 +39,23 @@ class SelectQueryBuilderTest {
         SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder();
         String findByIdQuery = selectQueryBuilder.findById(metadata.getEntityTable(), metadata.getEntityColumns(), "yang");
 
-        assertEquals(findByIdQuery, "select id, nick_name, old, email FROM users where id = 'yang'");
+        assertEquals(findByIdQuery, "select users.id, users.nick_name, users.old, users.email FROM users where id = 'yang'");
+    }
+
+    @Test
+    @DisplayName("Order 객체로 Join Query 만들기")
+    void findAllWithJoinQuery() {
+        Metadata mainMetaData = new Metadata(Order.class);
+        Metadata joinMetaData = new Metadata(OrderItem.class);
+
+        SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder();
+        String findByIdQuery = selectQueryBuilder.findAllWithJoin(mainMetaData.getEntityTable(), mainMetaData.getEntityColumns(),
+                joinMetaData.getEntityTable(), joinMetaData.getEntityColumns());
+
+        assertEquals(findByIdQuery, """
+                SELECT orders.id, orders.orderNumber, order_items.id, order_items.product, order_items.quantity \
+                FROM orders \
+                LEFT JOIN order_items ON orders.id = order_items.order_id\
+                """);
     }
 }

@@ -1,5 +1,7 @@
 package persistence.sql.entity;
 
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 
 import java.lang.reflect.Field;
@@ -41,4 +43,11 @@ public class EntityColumns {
         }
         throw new IllegalArgumentException("@Id 어노테이션이 존재하지 않음");
     }
+
+    public List<EntityColumn> getOneToManyColumns() {
+        return columns.stream()
+                .filter(EntityColumn::isOneToMany)
+                .collect(Collectors.toList());
+    }
+
 }

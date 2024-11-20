@@ -3,14 +3,16 @@ package persistence.sql.entity;
 import jakarta.persistence.Table;
 
 public class EntityTable {
+    private final Class<?> entityClass;
     private final String tableName;
 
-    public EntityTable(String tableName) {
+    public EntityTable(Class<?> entityClass, String tableName) {
+        this.entityClass = entityClass;
         this.tableName = tableName;
     }
 
     public static EntityTable from(Class<?> clazz) {
-        return new EntityTable(extractTableName(clazz));
+        return new EntityTable(clazz, extractTableName(clazz));
     }
 
     private static String extractTableName(Class<?> clazz) {
@@ -28,6 +30,9 @@ public class EntityTable {
 
     public String getTableName() {
         return tableName;
+    }
 
+    public Class<?> getEntityClass() {
+        return entityClass;
     }
 }

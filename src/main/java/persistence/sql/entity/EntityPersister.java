@@ -8,6 +8,7 @@ import persistence.sql.dml.UpdateQueryBuilder;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
+import java.util.List;
 
 public class EntityPersister {
 
@@ -41,11 +42,52 @@ public class EntityPersister {
     }
 
     public void insert(Object entity) {
-        String insertQuery = insertQueryBuilder.getInsertQuery(entityTable, entityColumns, entity);
-        Long idValue = jdbcTemplate.insertAndReturnId(insertQuery);
+        insertEntity(entity);
 
-        setIdValue(entity, idValue);
+        insertChildEntities(entity);
     }
+
+    private Long insertEntity(Object entity) {
+        String insertQuery = insertQueryBuilder.getInsertQuery(entityTable, entityColumns, entity, null);
+        Long idValue = jdbcTemplate.insertAndReturnId(insertQuery);
+        setIdValue(entity, idValue);
+        return idValue;
+    }
+
+    private void insertChildEntities(Object entity) {
+        List<EntityColumn> oneToManyColumns = entityColumns.getOneToManyColumns();
+
+        for (EntityColumn oneToManyColumn : oneToManyColumns) {
+            if (oneToManyColumn.isOneToMany()) {
+                List<?> children = getChildren(entity, oneToManyColumn);
+                insertChildren(entity, children);
+            }
+        }
+    }
+
+    private void insertChildren(Object entity, List<?> children) {
+        for (Object child : children) {
+            insertChildEntity(child, entity);
+        }
+    }
+
+    private List<?> getChildren(Object entity, EntityColumn oneToManyColumn) {
+        try {
+            Field field = oneToManyColumn.getField();
+            field.setAccessible(true);
+            return (List<?>) field.get(entity);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("자식 엔티티를 가져올 수 없음", e);
+        }
+    }
+
+    private void insertChildEntity(Object childEntity, Object parentEntity) {
+        EntityColumns childEntityColumns = EntityColumns.from(childEntity.getClass());
+        EntityTable childEntityTable = EntityTable.from(childEntity.getClass());
+        String insertQuery = insertQueryBuilder.getInsertQuery(childEntityTable, childEntityColumns, childEntity, parentEntity);
+        jdbcTemplate.execute(insertQuery);
+    }
+
 
     public void delete(Object entity) {
         String deleteQuery = deleteQueryBuilder.delete(entityTable, entityColumns, getIdValue(entity));
